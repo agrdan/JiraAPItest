@@ -1,6 +1,10 @@
 from jira.client import JIRA
+from requests.auth import HTTPBasicAuth
+import requests
+import json
+from JiraUserDto import JiraUserDto
 
-jira_server = "https://decode.atlassian.net"
+jira_server_raw = "https://decode.atlassian.net"
 jira_user = "" # your.email@decode.agency
 jira_password = "" # your jira password
 jira_api_token = "" #
@@ -9,16 +13,55 @@ jira_api_token = "" #
 Generiras token i zaljepis iznad
 """
 
-jira_server = {'server': jira_server}
+jira_server = {'server': jira_server_raw}
 jira = JIRA(options=jira_server, basic_auth=(jira_user, jira_api_token))
 
 # primjer
-# issue = jira.issue("IDTR-154")
-# print(issue.fields.description)
-# worklog = issue.field.worklog
+issue = jira.issue("IDTR-153")
+
+auth = HTTPBasicAuth(jira_user, jira_api_token)
+headers = {
+    "Accept": "application/json"
+}
+meUrl = "{}/rest/api/3/myself".format(jira_server_raw)
+print(meUrl)
+response = requests.request(
+    "GET",
+    meUrl,
+    headers=headers,
+    auth=auth
+)
+
+jiraUser = JiraUserDto().serialize(json.dumps(json.loads(response.text)), True)
+print(jiraUser.accountId)
+#print(json.dumps(json.loads(response.text), sort_keys=True, indent=4, separators=(",", ": ")))
+
+
+issueListUrl = "{}/rest/api/3/issue/picker".format(jira_server_raw)
+
+query = {
+    'query': 'assignee in ({})'.format(jiraUser.accountId)
+}
+
+response = requests.request(
+    "GET",
+    issueListUrl,
+    headers=headers,
+    params=query,
+    auth=auth
+)
+
+print(json.dumps(json.loads(response.text), sort_keys=True, indent=4, separators=(",", ": ")))
+
+# ovo radi, al pokusavam sad trenutno isto preko v3 dohvatiti issue
+#jqlCustom = "assignee in ({})".format(jiraUser.accountId)
+#issues = jira.search_issues(jqlCustom)
+#print(issues)
+
 
 
 
 
 if __name__ == '__main__':
-    print("Test")
+    pass
+    #print("Test")
