@@ -36,11 +36,22 @@ jiraUser = JiraUserDto().serialize(json.dumps(json.loads(response.text)), True)
 print(jiraUser.accountId)
 #print(json.dumps(json.loads(response.text), sort_keys=True, indent=4, separators=(",", ": ")))
 
+#issues2 = jira.search_issues('assignee = currentUser()')
+#print(issues2)
 
-issueListUrl = "{}/rest/api/3/issue/picker".format(jira_server_raw)
+issueListUrl = "{}/rest/api/3/search".format(jira_server_raw)
 
 query = {
-    'query': 'assignee in ({})'.format(jiraUser.accountId)
+    'jql': 'assignee in ({})'.format(jiraUser.accountId),
+    'maxResults': 2,
+    'fieldsByKeys': False,
+    'fields': [
+        'reporter',
+        'status',
+        'assignee',
+        'project'
+    ],
+    'startAt': 0
 }
 
 response = requests.request(
